@@ -5,13 +5,16 @@ import jsbeautify = require('js-beautify');
 import { CSSBeautifyOptions } from 'js-beautify';
 
 export function format(document: vscode.TextDocument, range: vscode.Range | null, defaultOptions: vscode.FormattingOptions) {
-    const settings = vscode.workspace.getConfiguration('formate');
-    const enable = settings.get('enable', true);
+    // Read from 'better-formate' namespace
+    const settingsNew = vscode.workspace.getConfiguration('better-formate');
+    const getSetting = <T>(key: string, def: T): T => settingsNew.get<T>(key, def) as T;
+
+    const enable = getSetting<boolean>('enable', true);
 
     if (!enable) return;
 
-    const verticalAlignProperties = settings.get('verticalAlignProperties', true);
-    const alignColon = settings.get('alignColon', true);
+    const verticalAlignProperties = getSetting<any>('verticalAlignProperties', true);
+    const alignColon = getSetting<boolean>('alignColon', true);
     // Set range if the range isn't set.
     if (range === null) {
         range = initDocumentRange(document);
@@ -37,8 +40,13 @@ export function format(document: vscode.TextDocument, range: vscode.Range | null
     let formatted = jsbeautify.css_beautify(content, beautifyOptions);
 
     if (verticalAlignProperties) {
-        const additionalSpaces = settings.get('additionalSpaces', 0);
-        formatted = verticalAlign(formatted, additionalSpaces, alignColon);
+        const additionalSpaces = getSetting<number>('additionalSpaces', 0);
+        // Support string option 'allFile' to align across the entire file.
+        if (verticalAlignProperties === 'allFile') {
+            formatted = verticalAlignAllFile(formatted, additionalSpaces, alignColon);
+        } else {
+            formatted = verticalAlign(formatted, additionalSpaces, alignColon);
+        }
     }
 
     if (formatted) {
@@ -199,6 +207,59 @@ export function findIndexOfFurthestColon(properties: string[]): number {
     if (!properties || properties.length === 0) return 0;
 
     return Math.max.apply(null, properties.map(p => p.indexOf(':')));
+}
+
+/**
+ * Align the entire file's properties to the same column, respecting comments and // formate-ignore.
+ * This collects every css property line and pads up to the furthest colon found in the whole file.
+ */
+export function verticalAlignAllFile(css: string, additionalSpaces: number = 0, alignColon: boolean): string {
+    const cssLines = css.split('\n');
+    // Determine the global furthest colon position across all property lines
+    let commentBlockEntered = false;
+    let ignoreNextLine = false;
+    let furthestColon = 0;
+
+    for (let i = 0; i < cssLines.length; i++) {
+        let raw = cssLines[i];
+        const line = raw.trim();
+
+        if (ignoreNextLine) { ignoreNextLine = false; continue; }
+        if (isLineIgnoreLine(line)) { ignoreNextLine = true; continue; }
+        if (isLineCommentLine(line)) continue;
+        if (line.indexOf('*/') >= 0) { commentBlockEntered = false; continue; }
+        if (line.startsWith('/*') || commentBlockEntered) { commentBlockEntered = true; continue; }
+
+        if (isProperty(line)) {
+            const idx = raw.indexOf(':');
+            if (idx > furthestColon) furthestColon = idx;
+        }
+    }
+    furthestColon += additionalSpaces;
+
+    // Second pass: apply padding to each property line up to the same column
+    commentBlockEntered = false;
+    ignoreNextLine = false;
+    for (let i = 0; i < cssLines.length; i++) {
+        let raw = cssLines[i];
+        const line = raw.trim();
+
+        if (ignoreNextLine) { ignoreNextLine = false; continue; }
+        if (isLineIgnoreLine(line)) { ignoreNextLine = true; continue; }
+        if (isLineCommentLine(line)) continue;
+        if (line.indexOf('*/') >= 0) { commentBlockEntered = false; continue; }
+        if (line.startsWith('/*') || commentBlockEntered) { commentBlockEntered = true; continue; }
+
+        if (isProperty(line)) {
+            const colonIndex = raw.indexOf(':');
+            if (colonIndex < furthestColon) {
+                const diff = furthestColon - colonIndex;
+                cssLines[i] = insertExtraSpaces(raw, diff, alignColon);
+            }
+        }
+    }
+
+    return cssLines.join('\n');
 }
 
 

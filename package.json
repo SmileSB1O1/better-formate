@@ -1,25 +1,25 @@
 {
-    "name": "formate",
-    "displayName": "formate: CSS/LESS/SCSS formatter",
-    "publisher": "MikeBovenlander",
-    "author": {
-        "name": "Mike Bovenlander"
+    "name"       : "better-formate",
+    "displayName": "better-formate: CSS/LESS/SCSS formatter",
+    "publisher"  : "SmileSB101",
+    "author"     : {
+        "name": "SmileSB101"
     },
     "repository": {
         "type": "git",
-        "url": "https://github.com/mblander/formate"
+        "url": "https://github.com/SmileSB1O1/better-formate"
     },
     "bugs": {
-        "url": "https://github.com/mblander/formate/issues"
+        "url": "https://github.com/SmileSB1O1/better-formate/issues"
     },
-    "homepage": "https://github.com/mblander/formate",
+    "homepage": "https://github.com/SmileSB1O1/better-formate",
     "icon": "images/formateicon.PNG",
     "galleryBanner": {
         "color": "#333",
         "theme": "dark"
     },
-    "description": "Formate is an CSS/LESS/SCSS format extension to format properties and align property values to improve readability.",
-    "version": "1.1.7",
+    "description": "better-formate is a CSS/LESS/SCSS format extension to format properties and align property values to improve readability.",
+    "version": "1.2.2",
     "engines": {
         "vscode": "^1.32.0"
     },
@@ -27,7 +27,8 @@
         "Formatters"
     ],
     "keywords": [
-        "formate",
+    "formate",
+    "better-formate",
         "css",
         "sass",
         "scss",
@@ -39,7 +40,7 @@
         "code-quality"
     ],
     "activationEvents": [
-        "onCommand:extension.formate",
+        "onCommand:extension.better-formate",
         "onLanguage:css",
         "onLanguage:less",
         "onLanguage:scss",
@@ -49,31 +50,44 @@
     "contributes": {
         "type": "object",
         "configuration": {
-            "title": "Formate",
+            "title": "better-formate",
             "properties": {
-                "formate.enable": {
+                "better-formate.enable": {
+                    "scope"      : "resource",
+                    "type"       : "boolean",
+                    "default"    : true,
+                    "description": "Controls whether better-formate is enabled or not."
+                },
+                "better-formate.verticalAlignProperties": {
+                    "scope": "resource",
+                    "type": [
+                        "boolean",
+                        "string"
+                    ],
+                    "default": true,
+                    "enum": [
+                        true,
+                        false,
+                        "allFile"
+                    ],
+                    "enumDescriptions": [
+                        "Enable vertical alignment (per selector/group).",
+                        "Disable vertical alignment.",
+                        "Align all properties in the entire file to the same column."
+                    ],
+                    "description": "Vertical align properties. Set to true for per-selector alignment, or 'allFile' to align across the entire file."
+                },
+                "better-formate.alignColon": {
                     "scope": "resource",
                     "type": "boolean",
                     "default": true,
-                    "description": "Controls whether formate is enabled or not."
+                    "description": "Whether better-formate should align on the colon or the CSS property value."
                 },
-                "formate.verticalAlignProperties": {
-                    "scope": "resource",
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Vertical align properties on colon per selector."
-                },
-                "formate.alignColon": {
-                    "scope": "resource",
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Whether Formate should align on the colon or the CSS property value."
-                },
-                "formate.additionalSpaces": {
+                "better-formate.additionalSpaces": {
                     "scope": "resource",
                     "type": "number",
                     "default": 0,
-                    "description": "Whether formate adds more spaces."
+                    "description": "Whether better-formate adds more spaces."
                 }
             }
         }

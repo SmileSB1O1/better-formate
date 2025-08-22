@@ -207,3 +207,55 @@ suite('verticalAlign', function () {
         assert.equal(actual.includes('background-color: green;'), true);
     });
 });
+
+suite('verticalAlignAllFile', function () {
+    test('align same column across whole file', () => {
+        // arrange
+        const css = `.a{
+    color: red;
+    background-color: green;
+}
+.b{
+    display: flex;
+    align-items: center;
+}`;
+
+        // act
+        const actual = extension.verticalAlignAllFile(css, 0, true);
+
+        // assert: colon index should be equal across groups
+        const lines = actual.split('\n');
+        const colorLine = lines.find(l => l.includes('color')) as string;
+        const bgLine = lines.find(l => l.includes('background-color')) as string;
+        const displayLine = lines.find(l => l.includes('display')) as string;
+        assert.ok(colorLine && bgLine && displayLine, 'Expected lines not found');
+        assert.equal(colorLine.indexOf(':'), bgLine.indexOf(':'));
+        assert.equal(displayLine.indexOf(':'), bgLine.indexOf(':'));
+    });
+
+    test('respects // formate-ignore for next line', () => {
+        // arrange
+        const css = `.x{
+    // formate-ignore
+    background: blue;
+}
+.y{
+    background-color: green;
+}`;
+
+        // act
+        const actual = extension.verticalAlignAllFile(css, 0, true);
+
+        // assert: ignored background should remain unchanged
+        assert.equal(actual.includes('background: blue;'), true);
+        // but other lines should be aligned to background-color
+        const lines = actual.split('\n');
+        const bgY = lines.find(l => l.includes('.y'));
+        const bgColorLine = lines.find(l => l.includes('background-color')) as string;
+        const maybeOther = lines.find(l => l.includes('background: blue;')) as string;
+        if (bgY && bgColorLine) {
+            // ensure the aligned line uses the furthest colon position (cannot be less than ignored one)
+            assert.ok(bgColorLine.indexOf(':') >= maybeOther.indexOf(':'));
+        }
+    });
+});
